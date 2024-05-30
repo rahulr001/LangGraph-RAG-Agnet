@@ -1,5 +1,17 @@
 from langchain_core.prompts import PromptTemplate
 
+
+question_prompt = PromptTemplate(
+    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an expert at routing a 
+    user question to a vectorstore or web search. Use the vectorstore for questions on LLM  agents, 
+    prompt engineering, and adversarial attacks. You do not need to be stringent with the keywords 
+    in the question related to these topics. Otherwise, use web-search. Give a binary choice 'web_search' 
+    or 'vectorstore' based on the question. Return the a JSON with a single key 'datasource' and 
+    no premable or explanation. Question to route: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+    input_variables=["question"],
+)
+
+
 retrival_prompt = PromptTemplate(
     template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing relevance 
     of a retrieved document to a user question. If the document contains keywords related to the user question, 
@@ -10,17 +22,6 @@ retrival_prompt = PromptTemplate(
     Here is the retrieved document: \n\n {document} \n\n
     Here is the user question: {question} \n <|eot_id|><|start_header_id|>assistant<|end_header_id|>
     """,
-    input_variables=["question", "document"],
-)
-
-
-rag_generator_prompt = PromptTemplate(
-    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
-    Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
-    Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
-    Question: {question} 
-    Context: {context} 
-    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
     input_variables=["question", "document"],
 )
 
@@ -38,7 +39,8 @@ hallucination_grade_prompt = PromptTemplate(
     input_variables=["generation", "documents"],
 )
 
-answer_prompt = PromptTemplate(
+
+answer_validation_prompt = PromptTemplate(
     template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing whether an 
     answer is useful to resolve a question. Give a binary score 'yes' or 'no' to indicate whether the answer is 
     useful to resolve a question. Provide the binary score as a JSON with a single key 'score' and no preamble or explanation.
@@ -50,12 +52,13 @@ answer_prompt = PromptTemplate(
     input_variables=["generation", "question"],
 )
 
-question_prompt = PromptTemplate(
-    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an expert at routing a 
-    user question to a vectorstore or web search. Use the vectorstore for questions on LLM  agents, 
-    prompt engineering, and adversarial attacks. You do not need to be stringent with the keywords 
-    in the question related to these topics. Otherwise, use web-search. Give a binary choice 'web_search' 
-    or 'vectorstore' based on the question. Return the a JSON with a single key 'datasource' and 
-    no premable or explanation. Question to route: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-    input_variables=["question"],
+
+rag_generator_prompt = PromptTemplate(
+    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
+    Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
+    Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
+    Question: {question} 
+    Context: {context} 
+    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+    input_variables=["question", "document"],
 )

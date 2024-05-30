@@ -1,68 +1,32 @@
-
-
-
-
-
-
+from langchain_core.documents import Document
+from app.retriever import retriever, web_search_tool
+from app.generators import (rag_chain_generator, question_router, answer_validation_grader, 
+                        hallucination_grade_generator, question_router, retrieval_grade_generator)
 
 def retrieve(state):
-    """
-    Retrieve documents from vectorstore
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        state (dict): New key added to state, documents, that contains retrieved documents
-    """
     print("---RETRIEVE---")
     question = state["question"]
-
-    # Retrieval
     documents = retriever.invoke(question)
     return {"documents": documents, "question": question}
 
 
 def generate(state):
-    """
-    Generate answer using RAG on retrieved documents
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        state (dict): New key added to state, generation, that contains LLM generation
-    """
     print("---GENERATE---")
     question = state["question"]
     documents = state["documents"]
-
-    # RAG generation
-    generation = rag_chain.invoke({"context": documents, "question": question})
+    generation = rag_chain_generator.invoke({"context": documents, "question": question})
     return {"documents": documents, "question": question, "generation": generation}
 
 
 def grade_documents(state):
-    """
-    Determines whether the retrieved documents are relevant to the question
-    If any document is not relevant, we will set a flag to run web search
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        state (dict): Filtered out irrelevant documents and updated web_search state
-    """
-
     print("---CHECK DOCUMENT RELEVANCE TO QUESTION---")
     question = state["question"]
     documents = state["documents"]
 
-    # Score each doc
     filtered_docs = []
     web_search = "No"
     for d in documents:
-        score = retrieval_grader.invoke(
+        score = retrieval_grade_generator.invoke(
             {"question": question, "document": d.page_content}
         )
         grade = score["score"]
@@ -81,16 +45,6 @@ def grade_documents(state):
 
 
 def web_search(state):
-    """
-    Web search based based on the question
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        state (dict): Appended web results to documents
-    """
-
     print("---WEB SEARCH---")
     question = state["question"]
     documents = state["documents"]
@@ -107,16 +61,6 @@ def web_search(state):
 
 
 def route_question(state):
-    """
-    Route question to web search or RAG.
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        str: Next node to call
-    """
-
     print("---ROUTE QUESTION---")
     question = state["question"]
     print(question)
@@ -133,16 +77,6 @@ def route_question(state):
 
 
 def decide_to_generate(state):
-    """
-    Determines whether to generate an answer, or add web search
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        str: Binary decision for next node to call
-    """
-
     print("---ASSESS GRADED DOCUMENTS---")
     question = state["question"]
     web_search = state["web_search"]
@@ -164,22 +98,12 @@ def decide_to_generate(state):
 
 
 def grade_generation_v_documents_and_question(state):
-    """
-    Determines whether the generation is grounded in the document and answers question.
-
-    Args:
-        state (dict): The current graph state
-
-    Returns:
-        str: Decision for next node to call
-    """
-
     print("---CHECK HALLUCINATIONS---")
     question = state["question"]
     documents = state["documents"]
     generation = state["generation"]
 
-    score = hallucination_grader.invoke(
+    score = hallucination_grade_generator.invoke(
         {"documents": documents, "generation": generation}
     )
     grade = score["score"]
@@ -189,7 +113,7 @@ def grade_generation_v_documents_and_question(state):
         print("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
         # Check question-answering
         print("---GRADE GENERATION vs QUESTION---")
-        score = answer_grader.invoke({"question": question, "generation": generation})
+        score = answer_validation_grader.invoke({"question": question, "generation": generation})
         grade = score["score"]
         if grade == "yes":
             print("---DECISION: GENERATION ADDRESSES QUESTION---")

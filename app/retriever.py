@@ -4,7 +4,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.tools.tavily_search import TavilySearchResults
-
+import app.utils
 
 
 urls = [
